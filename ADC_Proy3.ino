@@ -1,4 +1,4 @@
-//  Test routine heavily inspired by wiring_analog.c from GITHUB site
+
 // Global preamble
 #include "Arduino.h"
 #include "wiring_private.h"
@@ -23,21 +23,21 @@ static void   ADCsync() {
 uint32_t Status = 0x00000000;
   uint32_t ulPin_V = A1;      //This is the analog pin to read voltage
 uint32_t ulPin_C = A2;      //This is the analog pin to read current
-uint32_t rawDataV[50], rawDataI[50];           // variable to store the value read
+uint32_t rawDataV[1000], rawDataI[1000];           // variable to store the value read
 
 int pinCrucePorCero = 11;
 unsigned long pulseLenght, freq;
 int pinADCRead, range;
 
-float Vvector[50];
-float Ivector[50];
+float Vvector[1000];
+float Ivector[1000];
 
 float V;
 float I;
 
 void setup()
 {
-  Serial.begin(9600);          //  setup serial
+  Serial.begin(115200);          //  setup serial
   pinMode(PIN, OUTPUT);        // setup timing marker
 
   pinMode(pinCrucePorCero, INPUT);
@@ -94,26 +94,28 @@ void loop()
 
   configADC(1, range);
 
-  for (int i=0; i<50; i++){
+  for (int i=0; i<1000; i++){
       rawDataV[i] = continuousADCRead();
     }
     
   configADC(2, range);
 
-  for (int i=0; i<50; i++){
+  for (int i=0; i<1000; i++){
       rawDataI[i] = continuousADCRead();
     }
 
   //---------------------Conversion----------------------------
 
-     for (int i=0; i<=50; i++){ //Para tener 50 muestras
+     for (int i=0; i<1000; i++){ //Para tener 50 muestras
         V = rawDataV[i] * ((3.3)/1023.0);
+        V = (V-0.9)*27.7245*2;
         Vvector[i] = V;         
       }
 
 
-     for (int i=0; i<=50; i++){ //Para tener 50 muestras
+     for (int i=0; i<1000; i++){ //Para tener 50 muestras
         I = rawDataI[i] * ((3.3)/1023.0);
+        I=((I-0.8)-0.0614)/(6.1068);
         Ivector[i] = I;         
       }
 
@@ -123,11 +125,11 @@ float max_auxV, max_auxI, Vpico, Ipico;
 max_auxV = 0;
 max_auxI = 0;
 
-    for(int i=0; i<50; i++){
+    for(int i=0; i<1000; i++){
       max_auxV = max(max_auxV, Vvector[i]);
       }
 
-    for(int i=0; i<50; i++){
+    for(int i=0; i<1000; i++){
       max_auxI = max(max_auxI, Ivector[i]);
       }
 
@@ -139,16 +141,16 @@ Ipico = max_auxI;
   float auxV = 0;
   float auxI = 0;
 
-    for (int i=0; i<=50; i++){
+    for (int i=0; i<=1000; i++){
       
       auxV = auxV + ((Vvector[i])*(Vvector[i]));
       auxI = auxI + ((Ivector[i])*(Ivector[i]));
       
     }
     
-  float aux1V = auxV/50 ;
+  float aux1V = auxV/1000 ;
   float Vrms = sqrt(aux1V);
-  float aux1I = auxI/50 ;
+  float aux1I = auxI/1000 ;
   float Irms = sqrt(aux1I);
   
 //------------ Pontencia Promedio------------------- 
@@ -156,13 +158,13 @@ Ipico = max_auxI;
   float auxP = 0;
   float auxP1 = 0;
   
-    for (int i=0; i<=50; i++){
+    for (int i=0; i<=1000; i++){
         
       auxP1 = auxP + ((Vvector[i])*(Ivector[i]));
       
     }
 
-  float PotProm = auxP1/50 ;
+  float PotProm = auxP1/1000 ;
 
 //--------------------Potencia Aparente----------------------
 
@@ -174,24 +176,28 @@ Ipico = max_auxI;
 
 //----------------Envio de los datos------------------------
   
-  for(int i=0; i<50; i++){
-      Serial.print(Vvector[i]);
-      Serial.print(" ");
-      Serial.print(Ivector[i]);
-      Serial.print(" ");
-      Serial.print(Vrms);
-      Serial.print(" ");
-      Serial.print(Vpico);
-      Serial.print(" ");
-      Serial.print(Irms);
-      Serial.print(" ");
-      Serial.print(Ipico);
-      Serial.print(" ");
-      Serial.print(PotProm);
-      Serial.print(" ");
-      Serial.print(P_Aparente);
-      Serial.print(" ");
-      Serial.println(FP);
+  for(int i=0; i<1000; i++){
+     Serial.print(Vvector[i]);
+     Serial.print(" ");
+     Serial.print(Ivector[i]);
+     Serial.print(" ");
+     Serial.print(Vrms);
+     Serial.print(" ");
+     Serial.print(Vpico);
+     Serial.print(" ");
+     Serial.print(Irms);
+     Serial.print(" ");
+     Serial.print(Ipico);
+     Serial.print(" ");
+     Serial.print(PotProm);
+     Serial.print(" ");
+     Serial.print(P_Aparente);
+     Serial.print(" ");
+     Serial.print(FP);
+     Serial.print(" ");
+     Serial.println(freq);
+    
+   
   }
   
 }
@@ -264,4 +270,3 @@ void disableADC(){
   ADC->SWTRIG.reg = 0x01;                    //  and flush for good measure
   
 }
-
